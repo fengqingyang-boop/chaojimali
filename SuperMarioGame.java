@@ -125,7 +125,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies.add(new Enemy(500, 480));
         enemies.add(new Enemy(800, 480));
         enemies.add(new Enemy(1200, 480));
-        enemies.add(new Enemy(1600, 320));
+        enemies.add(new Enemy(1600, 280));
         enemies.add(new Enemy(2000, 480));
         
         coins.add(new Coin(400, 400));
@@ -144,6 +144,8 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
+        player.velocityY += GRAVITY;
+        
         player.update();
         
         if (player.y > PANEL_HEIGHT) {
@@ -155,13 +157,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 cameraX = 0;
             }
         }
-
-        player.velocityY += GRAVITY;
         
         checkCollisions();
         
         for (Enemy enemy : enemies) {
-            enemy.update(blocks);
+            enemy.update(blocks, GRAVITY);
         }
         
         int targetCameraX = player.x - PANEL_WIDTH / 3;
@@ -183,22 +183,40 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
             
             if (player.intersects(block)) {
-                if (player.velocityY > 0 && player.y + player.height - player.velocityY <= block.y) {
-                    player.y = block.y - player.height;
+                int playerBottom = player.y + player.height;
+                int playerTop = player.y;
+                int playerRight = player.x + player.width;
+                int playerLeft = player.x;
+                
+                int blockTop = block.y;
+                int blockBottom = block.y + block.height;
+                int blockLeft = block.x;
+                int blockRight = block.x + block.width;
+                
+                int overlapTop = playerBottom - blockTop;
+                int overlapBottom = blockBottom - playerTop;
+                int overlapLeft = playerRight - blockLeft;
+                int overlapRight = blockRight - playerLeft;
+                
+                int minOverlap = Math.min(Math.min(overlapTop, overlapBottom), 
+                                          Math.min(overlapLeft, overlapRight));
+                
+                if (minOverlap == overlapTop && player.velocityY >= 0) {
+                    player.y = blockTop - player.height;
                     player.velocityY = 0;
                     player.onGround = true;
-                } else if (player.velocityY < 0 && player.y - player.velocityY >= block.y + block.height) {
-                    player.y = block.y + block.height;
+                } else if (minOverlap == overlapBottom && player.velocityY < 0) {
+                    player.y = blockBottom;
                     player.velocityY = 0;
                     if (block.isQuestion()) {
                         block.hit();
                         coins.add(new Coin(block.x, block.y - 40));
                     }
-                } else if (player.velocityX > 0 && player.x + player.width - player.velocityX <= block.x) {
-                    player.x = block.x - player.width;
+                } else if (minOverlap == overlapLeft && player.velocityX > 0) {
+                    player.x = blockLeft - player.width;
                     player.velocityX = 0;
-                } else if (player.velocityX < 0 && player.x - player.velocityX >= block.x + block.width) {
-                    player.x = block.x + block.width;
+                } else if (minOverlap == overlapRight && player.velocityX < 0) {
+                    player.x = blockRight;
                     player.velocityX = 0;
                 }
             }
@@ -549,27 +567,76 @@ class Block extends Rectangle {
 
 class Enemy extends Rectangle {
     private int velocityX = -2;
+    private int velocityY = 0;
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     private int animFrame = 0;
     private int animCounter = 0;
+    private boolean onGround = false;
 
     public Enemy(int x, int y) {
         super(x, y, WIDTH, HEIGHT);
     }
 
-    public void update(ArrayList<Block> blocks) {
+    public void update(ArrayList<Block> blocks, int gravity) {
+        velocityY += gravity;
+        
         x += velocityX;
+        y += velocityY;
+        
+        onGround = false;
         
         for (Block block : blocks) {
+            if (block.isFlag()) continue;
+            
             if (this.intersects(block)) {
-                if (velocityX < 0) {
-                    x = block.x + block.width;
-                } else {
-                    x = block.x - width;
+                int enemyBottom = y + height;
+                int enemyTop = y;
+                int enemyRight = x + width;
+                int enemyLeft = x;
+                
+                int blockTop = block.y;
+                int blockBottom = block.y + block.height;
+                int blockLeft = block.x;
+                int blockRight = block.x + block.width;
+                
+                int overlapTop = enemyBottom - blockTop;
+                int overlapBottom = blockBottom - enemyTop;
+                int overlapLeft = enemyRight - blockLeft;
+                int overlapRight = blockRight - enemyLeft;
+                
+                int minOverlap = Math.min(Math.min(overlapTop, overlapBottom), 
+                                          Math.min(overlapLeft, overlapRight));
+                
+                if (minOverlap == overlapTop && velocityY >= 0) {
+                    y = blockTop - height;
+                    velocityY = 0;
+                    onGround = true;
+                } else if (minOverlap == overlapLeft && velocityX > 0) {
+                    x = blockLeft - width;
+                    velocityX = -velocityX;
+                } else if (minOverlap == overlapRight && velocityX < 0) {
+                    x = blockRight;
+                    velocityX = -velocityX;
                 }
-                velocityX = -velocityX;
             }
+        }
+        
+        boolean hasGroundAhead = false;
+        int checkX = velocityX > 0 ? x + width + 2 : x - 2;
+        
+        for (Block block : blocks) {
+            if (block.isFlag()) continue;
+            if (checkX >= block.x && checkX < block.x + block.width) {
+                if (y + height + 5 >= block.y && y + height < block.y + 10) {
+                    hasGroundAhead = true;
+                    break;
+                }
+            }
+        }
+        
+        if (onGround && !hasGroundAhead) {
+            velocityX = -velocityX;
         }
         
         animCounter++;

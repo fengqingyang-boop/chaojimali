@@ -1,52 +1,55 @@
 @echo off
-chcp 65001 >nul
-title 超级玛丽 - Java版
+title Super Mario - Java Version
 echo ========================================
-echo   超级玛丽 Java版 游戏启动器
+echo   Super Mario Game Launcher
 echo ========================================
 echo.
 
-REM 检查 Java 是否安装
+REM Check Java installation
 java -version >nul 2>&1
 if errorlevel 1 (
-    echo [错误] 未检测到 Java 环境！
+    echo [ERROR] Java not found!
     echo.
-    echo 请先安装 Java JDK 或 JRE (版本 8 或更高)
-    echo 下载地址: https://www.oracle.com/java/technologies/downloads/
+    echo Please install Java JDK or JRE (version 8 or higher)
+    echo Download: https://www.oracle.com/java/technologies/downloads/
     echo.
     pause
     exit /b 1
 )
 
-echo [信息] Java 环境检测通过
+echo [INFO] Java detected successfully
 echo.
 
-REM 编译 Java 文件
-echo [信息] 正在编译游戏代码...
+REM Compile Java files
+echo [INFO] Compiling game code...
 javac SuperMarioGame.java
 if errorlevel 1 (
-    echo [错误] 编译失败！
+    echo [ERROR] Compilation failed!
     pause
     exit /b 1
 )
-echo [信息] 编译成功！
+echo [INFO] Compilation successful!
 echo.
 
-REM 运行游戏
-echo [信息] 正在启动游戏...
-echo [提示] 游戏窗口将在几秒钟后打开
-echo [提示] 控制方式:
-echo        方向键 / WASD - 移动
-echo        空格键 - 跳跃
-echo        R键 - 重新开始
+REM Run game using start to open in new window
+echo [INFO] Starting game...
+echo [INFO] Game window should open in a few seconds
+echo [INFO] Controls:
+echo        Arrow Keys / WASD - Move
+echo        Spacebar - Jump
+echo        R Key - Restart
 echo.
-java SuperMarioGame
 
-REM 清理 class 文件
+start "Super Mario" java SuperMarioGame
+
+REM Wait a moment for the game to start
+timeout /t 2 /nobreak >nul
+
+REM Clean up class files after game starts
 del /Q *.class 2>nul
 
-echo.
 echo ========================================
-echo   游戏已退出
+echo   Game launched!
+echo   This window will close automatically.
 echo ========================================
-pause
+timeout /t 3 /nobreak >nul
