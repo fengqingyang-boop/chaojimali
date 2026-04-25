@@ -1,37 +1,56 @@
 @echo off
+setlocal enabledelayedexpansion
 title Super Mario - Java Version
+
+cd /d "%~dp0"
+
 echo ========================================
 echo   Super Mario Game Launcher
 echo ========================================
 echo.
+echo Working Directory: %cd%
+echo.
 
-REM Check Java installation
-java -version >nul 2>&1
+echo [INFO] Checking Java installation...
+java -version 2>&1
 if errorlevel 1 (
+    echo.
     echo [ERROR] Java not found!
     echo.
     echo Please install Java JDK or JRE (version 8 or higher)
     echo Download: https://www.oracle.com/java/technologies/downloads/
     echo.
-    pause
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
-
-echo [INFO] Java detected successfully
+echo [INFO] Java detected successfully!
 echo.
 
-REM Compile Java files
 echo [INFO] Compiling game code...
 javac SuperMarioGame.java
 if errorlevel 1 (
+    echo.
     echo [ERROR] Compilation failed!
-    pause
+    echo.
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
 echo [INFO] Compilation successful!
 echo.
 
-REM Run game using start to open in new window
+echo [INFO] Checking compiled files...
+if not exist "SuperMarioGame.class" (
+    echo [ERROR] SuperMarioGame.class not found!
+    echo.
+    echo Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+echo [INFO] All class files ready!
+echo.
+
 echo [INFO] Starting game...
 echo [INFO] Game window should open in a few seconds
 echo [INFO] Controls:
@@ -40,16 +59,11 @@ echo        Spacebar - Jump
 echo        R Key - Restart
 echo.
 
-start "Super Mario" java SuperMarioGame
+start "" javaw -cp . SuperMarioGame
 
-REM Wait a moment for the game to start
-timeout /t 2 /nobreak >nul
-
-REM Clean up class files after game starts
-del /Q *.class 2>nul
-
+echo [INFO] Game launch command sent!
+echo.
 echo ========================================
-echo   Game launched!
-echo   This window will close automatically.
+echo   Launcher will close in 3 seconds...
 echo ========================================
 timeout /t 3 /nobreak >nul
